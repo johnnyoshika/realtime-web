@@ -1,0 +1,65 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>SignalR</title>
+</head>
+<body>
+    <h1 style="text-align:center;">Chat</h1>
+    <div style="text-align:center">
+        <button data-action="ping">Ping server</button>
+    </div>
+    <div style="width:600px;margin:20px auto">
+        <div>
+            <input type="text" name="message" style="width:100%;" />
+        </div>
+        <div data-section="messages" style="margin: 10px 0;border:1px solid #ccc;"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aspnet-signalr/1.1.4/signalr.js"></script>
+    <script>
+        let messageNode = (message, color) => {
+            let d = document.createElement('div');
+            d.innerText = message;
+            d.style.color = color;
+            return d;
+        };
+
+        let appendMessage = (message, color = 'black') =>
+                document.querySelector('[data-section="messages"]').append(messageNode(message, color));
+
+        let connect = () => {
+            let connection = new signalR.HubConnectionBuilder()
+                .withUrl("/chathub")
+                .build();
+
+            connection.on('ShowMessage', message =>
+                appendMessage(message, 'blue'));
+
+            connection.on('Test', message =>
+                appendMessage(message, 'green'));
+
+            connection.start()
+                .catch(err => appendMessage(`Something went wrong: ${err.toString()}`, 'red'));
+
+            document.querySelector('[name="message"]').addEventListener('keyup', e => {
+                if (e.keyCode == 13) {
+                    connection.invoke("SendMessage", e.target.value);
+                    appendMessage(`me: ${e.target.value}`, 'grey');
+                    e.target.value = '';
+                }
+            });
+
+            document.querySelector('[data-action="ping"]').addEventListener('click', () => fetch('/signalr/test'));
+        };
+
+        connect();
+    </script>
+</body>
+</html>

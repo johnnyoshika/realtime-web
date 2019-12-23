@@ -84,6 +84,10 @@ namespace RealtimeWeb.Controllers
             }
         }
 
+
+        [HttpGet("signalr")]
+        public IActionResult SignalR() => View();
+
         [HttpGet("/signalr/test")]
         public async Task SignalRSendTestMessage() =>
             await ChatHub.Clients.All.SendAsync("Test", $"Test message from server at {DateTime.Now.ToLongTimeString()}");
