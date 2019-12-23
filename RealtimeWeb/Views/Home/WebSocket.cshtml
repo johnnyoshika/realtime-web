@@ -1,0 +1,60 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Web Socket</title>
+</head>
+<body>
+    <div style="text-align:center;margin:50px;">
+        <button data-action="start">Start</button>
+    </div>
+    <div style="text-align:center;margin:20px;font-size:2em;" data-section="status"></div>
+    <div style="text-align:center;margin:20px;" data-section="result"></div>
+
+    <script>
+        let connect = () => {
+            let ws = new WebSocket(`wss://${window.location.host}/websocket/data`);
+            document.querySelector('[data-section="status"]').textContent = '';
+            document.querySelector('[data-section="result"]').textContent = '';
+            
+            ws.onopen = event =>
+                document.querySelector('[data-section="status"]').textContent = 'Open';
+
+            ws.onmessage = event => {
+                let data = JSON.parse(event.data);
+                loop = data.loop;
+                document.querySelector('[data-section="result"]').textContent = `Loop ${loop} at ${data.at}`;
+            }
+
+            ws.onerror = event => {
+                if (event.code === 'ECONNREFUSED') {
+                    document.querySelector('[data-section="status"]').textContent = `Connection refused, retrying... Message: ${event.message}`;
+                    setTimeout(connect, 2000);
+                } else {
+                    document.querySelector('[data-section="status"]').textContent = `Error Message: ${event.message}`;
+                }
+            }
+
+            ws.onclose = event => {
+                if (event.code === 1000) {
+                    document.querySelector('[data-section="status"]').textContent = `Closed normally, code=${event.code}, reason=${event.reason}`;
+                } else {
+                    document.querySelector('[data-section="status"]').textContent = `Connection died, retrying..., code=${event.code}, reason=${event.reason}`;
+                    setTimeout(connect, 2000);
+                }
+            }
+        };
+
+        document.querySelector('[data-action="start"]').addEventListener('click', e => {
+            e.preventDefault();
+            connect();
+        });
+    </script>
+</body>
+</html>

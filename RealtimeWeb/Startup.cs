@@ -27,6 +27,11 @@ namespace RealtimeWeb
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseWebSockets(new WebSocketOptions
+            {
+                KeepAliveInterval = TimeSpan.FromSeconds(120), // Sends a ping every 120 seconds
+                ReceiveBufferSize = 4 * 1024
+            });
             app.UseRouting();
             app.UseEndpoints(endpoints => endpoints.MapDefaultControllerRoute());
         }
