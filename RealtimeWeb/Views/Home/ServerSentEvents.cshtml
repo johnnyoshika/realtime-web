@@ -1,0 +1,52 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Server-Sent Events</title>
+</head>
+<body>
+    <div style="text-align:center;margin:50px;">
+        <button data-action="start">Start</button>
+    </div>
+    <div style="text-align:center;margin:20px;font-size:2em;" data-section="status"></div>
+    <div style="text-align:center;margin:20px;" data-section="result"></div>
+
+    <script>
+        document.querySelector('[data-action="start"]').addEventListener('click', e => {
+            let loop = 0;
+            e.preventDefault();
+            document.querySelector('[data-section="status"]').textContent = '';
+            document.querySelector('[data-section="result"]').textContent = '';
+            let source = new EventSource('/sse/data');
+
+            source.onopen = event =>
+                document.querySelector('[data-section="status"]').textContent = 'Open';
+
+            source.onmessage = event => {
+                let data = JSON.parse(event.data);
+                loop = data.loop;
+                document.querySelector('[data-section="result"]').textContent = `Loop ${loop} at ${data.at}`;
+            }
+
+            source.onerror = event => {
+                if (event.eventPhase == EventSource.CLOSED) {
+                    if (loop < 5) {
+                        document.querySelector('[data-section="status"]').textContent = 'Closed, but retrying...';
+                    } else {
+                        document.querySelector('[data-section="status"]').textContent = 'Closed';
+                        source.close(); // if we don't close, connection with the server will be re-established
+                    }
+                } else {
+                    document.querySelector('[data-section="status"]').textContent = 'Error: ' + event.eventPhase;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
