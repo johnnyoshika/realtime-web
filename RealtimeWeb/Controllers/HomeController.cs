@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using RealtimeWeb.Hubs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +15,13 @@ namespace RealtimeWeb.Controllers
 {
     public class HomeController : Controller
     {
+        public HomeController(IHubContext<ChatHub> chatHub)
+        {
+            ChatHub = chatHub;
+        }
+
+        IHubContext<ChatHub> ChatHub { get; }
+
         public IActionResult Index() => View();
 
         [HttpGet("sse")]
@@ -74,5 +83,9 @@ namespace RealtimeWeb.Controllers
                 Thread.Sleep(2000);
             }
         }
+
+        [HttpGet("/signalr/test")]
+        public async Task SignalRSendTestMessage() =>
+            await ChatHub.Clients.All.SendAsync("Test", $"Test message from server at {DateTime.Now.ToLongTimeString()}");
     }
 }

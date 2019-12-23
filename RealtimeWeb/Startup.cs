@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using RealtimeWeb.Hubs;
 
 namespace RealtimeWeb
 {
@@ -17,6 +18,7 @@ namespace RealtimeWeb
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
+            services.AddSignalR(c => c.EnableDetailedErrors = true);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -27,13 +29,19 @@ namespace RealtimeWeb
                 app.UseDeveloperExceptionPage();
             }
 
+            // This is only needed for bare metal Web Socket. This isn't needed for SignalR.
             app.UseWebSockets(new WebSocketOptions
             {
                 KeepAliveInterval = TimeSpan.FromSeconds(120), // Sends a ping every 120 seconds
                 ReceiveBufferSize = 4 * 1024
             });
+
             app.UseRouting();
-            app.UseEndpoints(endpoints => endpoints.MapDefaultControllerRoute());
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapHub<ChatHub>("/chathub");
+                endpoints.MapDefaultControllerRoute();
+            });
         }
     }
 }
